@@ -209,21 +209,48 @@ class Cache
 // the constructor of Kernel prepares to calculate the l*l kernel matrix
 // the member function get_Q is for getting one column from the Q Matrix
 //
+
+/**
+ * l*l 核矩阵
+ */
 abstract class QMatrix
 {
+    /**
+     * 获取某一列
+     * @param column
+     * @param len
+     * @return
+     */
     abstract float[] get_Q(int column, int len);
 
     abstract double[] get_QD();
 
+    /**
+     * 交换样本i和j
+     * @param i
+     * @param j
+     */
     abstract void swap_index(int i, int j);
 };
 
+/**
+ * 核
+ */
 abstract class Kernel extends QMatrix
 {
+    /**
+     * 指向样本数据
+     */
     private svm_node[][] x;
+    /**
+     * x的平方，使用RBF 核才使用
+     */
     private final double[] x_square;
 
     // svm_parameter
+    /**
+     * 核函数类型
+     */
     private final int kernel_type;
     private final int degree;
     private final double gamma;
@@ -251,6 +278,12 @@ abstract class Kernel extends QMatrix
         while (false);
     }
 
+    /**
+     * n次方
+     * @param base 底
+     * @param times 幂
+     * @return
+     */
     private static double powi(double base, int times)
     {
         double tmp = base, ret = 1.0;
@@ -263,6 +296,12 @@ abstract class Kernel extends QMatrix
         return ret;
     }
 
+    /**
+     * 核函数
+     * @param i
+     * @param j
+     * @return
+     */
     double kernel_function(int i, int j)
     {
         switch (kernel_type)
@@ -282,6 +321,12 @@ abstract class Kernel extends QMatrix
         }
     }
 
+    /**
+     * 构造核函数，拷贝数据集和参数
+     * @param l 数据集的长度
+     * @param x_
+     * @param param
+     */
     Kernel(int l, svm_node[][] x_, svm_parameter param)
     {
         this.kernel_type = param.kernel_type;
@@ -300,6 +345,12 @@ abstract class Kernel extends QMatrix
         else x_square = null;
     }
 
+    /**
+     * 点乘两个样本数据（向量）
+     * @param x
+     * @param y
+     * @return
+     */
     static double dot(svm_node[] x, svm_node[] y)
     {
         double sum = 0;
@@ -322,6 +373,13 @@ abstract class Kernel extends QMatrix
         return sum;
     }
 
+    /**
+     * 代入核函数
+     * @param x
+     * @param y
+     * @param param
+     * @return
+     */
     static double k_function(svm_node[] x, svm_node[] y,
                              svm_parameter param)
     {
@@ -401,31 +459,64 @@ abstract class Kernel extends QMatrix
 //
 class Solver
 {
+    /**
+     * 计算时实际参加运算的样本数目，经过shrink 处理后，该数目会小于全部样本总数。
+     */
     int active_size;
+    /**
+     * 样本所属类别，该值只取+1/-1 。虽然可以处理多类，最终是用两类SVM 完成的。
+     */
     byte[] y;
+    /**
+     * 目标函数的梯度
+     */
     double[] G;        // gradient of objective function
     static final byte LOWER_BOUND = 0;
     static final byte UPPER_BOUND = 1;
     static final byte FREE = 2;
+    /**
+     * alpha_i的状态，根据情况分为 α[i] ≤ 0, α[i] ≥ c和0 <α[i] < 0，分别对应内部点(非SV)，错分点(BSV)和支持向量(SV)。
+     */
     byte[] alpha_status;    // LOWER_BOUND, UPPER_BOUND, FREE
+    /**
+     * α[i]
+     */
     double[] alpha;
+    /**
+     * 指定核。核函数和Solver 相互结合，可以产生多种SVC,SVR
+     */
     QMatrix Q;
     double[] QD;
     double eps;
     double Cp, Cn;
     double[] p;
     int[] active_set;
+    /**
+     * 该值可以在对样本集做 shrink 时，减小重建梯度的计算量。
+     */
     double[] G_bar;        // gradient, if we treat free variables as 0
+    /**
+     * 样本总数
+     */
     int l;
     boolean unshrink;    // XXX
 
     static final double INF = java.lang.Double.POSITIVE_INFINITY;
 
+    /**
+     * 获取惩罚因子C，设置不同的Cp 和Cn 是为了处理数据的不平衡
+     * @param i
+     * @return
+     */
     double get_C(int i)
     {
         return (y[i] > 0) ? Cp : Cn;
     }
 
+    /**
+     * 更新alpha的状态
+     * @param i
+     */
     void update_alpha_status(int i)
     {
         if (alpha[i] >= get_C(i))
