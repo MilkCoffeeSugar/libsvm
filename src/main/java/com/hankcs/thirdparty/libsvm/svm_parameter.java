@@ -1,5 +1,8 @@
 package com.hankcs.thirdparty.libsvm;
 
+/**
+ * SVM模型参数
+ */
 public class svm_parameter implements Cloneable,java.io.Serializable
 {
 	/* svm_type */
