@@ -190,6 +190,7 @@ class svm_predict
         }
         catch (FileNotFoundException e)
         {
+            System.err.printf("Can't find file : %s\n", e.getMessage());
             exit_with_help();
         }
         catch (ArrayIndexOutOfBoundsException e)
