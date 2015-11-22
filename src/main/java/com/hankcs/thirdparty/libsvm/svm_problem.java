@@ -10,7 +10,7 @@ public class svm_problem implements java.io.Serializable
 	 */
 	public int l;
 	/**
-	 * 样本所属类别
+	 * 样本所属类别或者回归值
 	 */
 	public double[] y;
 	/**
