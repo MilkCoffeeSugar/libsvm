@@ -25,7 +25,7 @@ class Cache
     private long size;
 
     /**
-     * 一个块的索引
+     * 一个块的索引（环形链表）
      */
     private final class head_t
     {
@@ -48,7 +48,8 @@ class Cache
     }
 
     /**
-     * 链表的头指针
+     * 变量指针，该指针用来记录程序所申请的内存，单块申请到的内存用head_t来记录所申请内存的指针，并记录长度。而且通过双向的
+     * 指针，形成链表，增加寻址的速度。记录所有申请到的内存，一方面便于释放内存，另外方便在内存不够时适当释放一部分已经申请到的内存。
      */
     private final head_t[] head;
     /**
@@ -1777,6 +1778,10 @@ public class svm
     //
     // decision_function
     //
+
+    /**
+     * 决策函数
+     */
     static class decision_function
     {
         double[] alpha;
@@ -2249,7 +2254,7 @@ public class svm
      *
      * @param prob  数据
      * @param param 参数
-     * @return
+     * @return SVM模型
      */
     public static svm_model svm_train(svm_problem prob, svm_parameter param)
     {
@@ -2679,6 +2684,11 @@ public class svm
         return model.l;
     }
 
+    /**
+     * 获取回归概率
+     * @param model
+     * @return
+     */
     public static double svm_get_svr_probability(svm_model model)
     {
         if ((model.param.svm_type == svm_parameter.EPSILON_SVR || model.param.svm_type == svm_parameter.NU_SVR) &&
@@ -2694,10 +2704,10 @@ public class svm
     /**
      * 用训练好的模型预测样本的值，输出结果保留到数组中
      *
-     * @param model
-     * @param x
-     * @param dec_values
-     * @return
+     * @param model 模型
+     * @param x 样本
+     * @param dec_values 每个分类器的输出
+     * @return 最可能的类别
      */
     public static double svm_predict_values(svm_model model, svm_node[] x, double[] dec_values)
     {
@@ -2772,6 +2782,12 @@ public class svm
         }
     }
 
+    /**
+     * 预测某一个样本的类别
+     * @param model 模型
+     * @param x 样本
+     * @return 最可能的类别
+     */
     public static double svm_predict(svm_model model, svm_node[] x)
     {
         int nr_class = model.nr_class;
@@ -2786,6 +2802,13 @@ public class svm
         return pred_result;
     }
 
+    /**
+     * 预测某一个样本的类别，并输出每个类别的概率
+     * @param model 模型
+     * @param x 样本
+     * @param prob_estimates 每个类别对应的概率
+     * @return 最可能的类别
+     */
     public static double svm_predict_probability(svm_model model, svm_node[] x, double[] prob_estimates)
     {
         if ((model.param.svm_type == svm_parameter.C_SVC || model.param.svm_type == svm_parameter.NU_SVC) &&
@@ -2819,11 +2842,17 @@ public class svm
             return svm_predict(model, x);
     }
 
+    /**
+     * SVM类型
+     */
     static final String svm_type_table[] =
             {
                     "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr",
             };
 
+    /**
+     * 核函数类型
+     */
     static final String kernel_type_table[] =
             {
                     "linear", "polynomial", "rbf", "sigmoid", "precomputed"
@@ -3045,7 +3074,7 @@ public class svm
     }
 
     /**
-     * 从文件中把训练好的模型读到内存中
+     * 从文件中加载训练好的模型
      *
      * @param model_file_name
      * @return
@@ -3113,7 +3142,7 @@ public class svm
      *
      * @param prob
      * @param param
-     * @return
+     * @return 错误
      */
     public static String svm_check_parameter(svm_problem prob, svm_parameter param)
     {
@@ -3235,6 +3264,11 @@ public class svm
         return null;
     }
 
+    /**
+     * 检查是否是概率模型
+     * @param model 模型
+     * @return 是否是概率模型
+     */
     public static int svm_check_probability_model(svm_model model)
     {
         if (((model.param.svm_type == svm_parameter.C_SVC || model.param.svm_type == svm_parameter.NU_SVC) &&
@@ -3246,6 +3280,10 @@ public class svm
             return 0;
     }
 
+    /**
+     * 设置打印函数
+     * @param print_func 打印函数
+     */
     public static void svm_set_print_string_function(svm_print_interface print_func)
     {
         if (print_func == null)

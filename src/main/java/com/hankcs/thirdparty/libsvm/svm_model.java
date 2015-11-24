@@ -4,7 +4,7 @@ package com.hankcs.thirdparty.libsvm;
 // svm_model
 //
 /**
- * 保存训练后的训练模型，当然原来的训练参数也必须保留
+ * 保存训练后的训练模型，训练参数也保留在此
  */
 public class svm_model implements java.io.Serializable
 {
@@ -32,6 +32,9 @@ public class svm_model implements java.io.Serializable
 	 * 相当于判别函数中的b
 	 */
 	public double[] rho;		// constants in decision functions (rho[k*(k-1)/2])
+	/**
+	 * 当训练参数指定输出概率的时候，储存概率
+	 */
 	public double[] probA;         // pariwise probability information
 	public double[] probB;
 	/**
@@ -50,4 +53,4 @@ public class svm_model implements java.io.Serializable
 	 */
 	public int[] nSV;		// number of SVs for each class (nSV[k])
 				// nSV[0] + nSV[1] + ... + nSV[k-1] = l
-};
+}
