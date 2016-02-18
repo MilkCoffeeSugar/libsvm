@@ -57,6 +57,11 @@ class Cache
      */
     private head_t lru_head;
 
+    /**
+     * 初始化缓存
+     * @param l_ 样本数量
+     * @param size_ 缓存大小
+     */
     Cache(int l_, long size_)
     {
         l = l_;
@@ -100,11 +105,11 @@ class Cache
     // java: simulate pointer using single-element array
 
     /**
-     * 获取某个块长度为len的数据
-     * @param index
-     * @param data
-     * @param len
-     * @return
+     * 获取某个块长度为len的数据（如果该块内存不足len，则额外补充分配不足的部分），并将这个块放入队列尾部
+     * @param index 块的下标
+     * @param data [1][]模拟指针，返回的数据到此
+     * @param len 需要的长度
+     * @return 原来的长度
      */
     int get_data(int index, float[][] data, int len)
     {
@@ -144,9 +149,9 @@ class Cache
     }
 
     /**
-     * 交换两个块的内容
-     * @param i
-     * @param j
+     * 交换两个块的内容，并将它们放到尾部
+     * @param i 第一个下标
+     * @param j 第二个下标
      */
     void swap_index(int i, int j)
     {
@@ -253,14 +258,28 @@ abstract class Kernel extends QMatrix
      * 核函数类型
      */
     private final int kernel_type;
+    /**
+     * 多项式核函数中的d
+     */
     private final int degree;
+    /**
+     * 后三个式子中的参数γ
+     */
     private final double gamma;
+    /**
+     * poly/sigmoid中的r
+     */
     private final double coef0;
 
     abstract float[] get_Q(int column, int len);
 
     abstract double[] get_QD();
 
+    /**
+     * 交换两个下标对应的内容
+     * @param i
+     * @param j
+     */
     void swap_index(int i, int j)
     {
         do
@@ -298,10 +317,10 @@ abstract class Kernel extends QMatrix
     }
 
     /**
-     * 核函数
-     * @param i
-     * @param j
-     * @return
+     * 代入核函数
+     * @param i 第一个向量
+     * @param j 第二个向量
+     * @return 核函数输出
      */
     double kernel_function(int i, int j)
     {
@@ -325,8 +344,8 @@ abstract class Kernel extends QMatrix
     /**
      * 构造核函数，拷贝数据集和参数
      * @param l 数据集的长度
-     * @param x_
-     * @param param
+     * @param x_ 数据集
+     * @param param 参数
      */
     Kernel(int l, svm_node[][] x_, svm_parameter param)
     {
@@ -350,7 +369,7 @@ abstract class Kernel extends QMatrix
      * 点乘两个样本数据（向量）
      * @param x
      * @param y
-     * @return
+     * @return 内积
      */
     static double dot(svm_node[] x, svm_node[] y)
     {
@@ -379,7 +398,7 @@ abstract class Kernel extends QMatrix
      * @param x
      * @param y
      * @param param
-     * @return
+     * @return 核函数输出
      */
     static double k_function(svm_node[] x, svm_node[] y,
                              svm_parameter param)
@@ -458,6 +477,10 @@ abstract class Kernel extends QMatrix
 //
 // solution will be put in \alpha, objective value will be put in obj
 //
+
+/**
+ * SMO 算法实现
+ */
 class Solver
 {
     /**
@@ -487,9 +510,22 @@ class Solver
      * 指定核。核函数和Solver 相互结合，可以产生多种SVC,SVR
      */
     QMatrix Q;
+    /**
+     *
+     */
     double[] QD;
+    /**
+     * 误差限
+     */
     double eps;
-    double Cp, Cn;
+    /**
+     * 正例惩罚因子
+     */
+    double Cp,
+    /**
+     * 负例惩罚因子
+     */
+            Cn;
     double[] p;
     int[] active_set;
     /**
@@ -553,6 +589,11 @@ class Solver
         double r;    // for Solver_NU
     }
 
+    /**
+     * 完全交换样本i和样本j的内容，包括所申请的内存的地址
+     * @param i
+     * @param j
+     */
     void swap_index(int i, int j)
     {
         Q.swap_index(i, j);
@@ -607,6 +648,11 @@ class Solver
         while (false);
     }
 
+    /**
+     * 重新计算梯度。G_bar[i]在初始化时并未加入p[i]，所以程序首先增加p[i]。
+     * Shrink后依然参加运算的样本位于active_size和L-1位置上。在0～active_size之间
+     * 的alpha[i]如果在区间(0,c)上，才有必要更新相应的active_size和L-1位置上的样本的梯度。
+     */
     void reconstruct_gradient()
     {
         // reconstruct inactive elements of G from G_bar and free variables
